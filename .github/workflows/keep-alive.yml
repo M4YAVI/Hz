@@ -15,7 +15,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 9
+
       - name: Install Supabase Client
-            run: pnpm install @supabase/supabase-js
+        run: pnpm add @supabase/supabase-js
       - name: Run keep-alive script
         run: node scripts/keep-alive.js
