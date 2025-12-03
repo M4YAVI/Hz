@@ -17,6 +17,8 @@ interface PlayerStore {
   setShuffle: (shuffle: boolean) => void
   isLooping: boolean
   toggleLoop: () => void
+  isSidebarCollapsed: boolean
+  toggleSidebar: () => void
 }
 
 export const usePlayerStore = create<PlayerStore>((set, get) => ({
@@ -26,6 +28,7 @@ export const usePlayerStore = create<PlayerStore>((set, get) => ({
   currentIndex: -1,
   isShuffle: false,
   isLooping: false,
+  isSidebarCollapsed: false,
 
   setQueue: (songs) => set({ queue: songs }),
 
@@ -70,4 +73,5 @@ export const usePlayerStore = create<PlayerStore>((set, get) => ({
   toggleShuffle: () => set((state) => ({ isShuffle: !state.isShuffle })),
   setShuffle: (shuffle: boolean) => set({ isShuffle: shuffle }),
   toggleLoop: () => set((state) => ({ isLooping: !state.isLooping })),
+  toggleSidebar: () => set((state) => ({ isSidebarCollapsed: !state.isSidebarCollapsed })),
 }))
