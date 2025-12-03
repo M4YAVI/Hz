@@ -9,16 +9,18 @@ import { formatDuration } from "@/lib/utils"
 import Image from "next/image"
 
 export function Player() {
-  const { 
-    currentSong, 
-    isPlaying, 
-    togglePlay, 
-    playNext, 
-    playPrevious, 
-    isShuffle, 
-    toggleShuffle 
+  const {
+    currentSong,
+    isPlaying,
+    togglePlay,
+    playNext,
+    playPrevious,
+    isShuffle,
+    toggleShuffle,
+    isLooping,
+    toggleLoop
   } = usePlayerStore()
-  
+
   const audioRef = useRef<HTMLAudioElement>(null)
   const [progress, setProgress] = useState(0)
   const [volume, setVolume] = useState(1)
@@ -28,7 +30,7 @@ export function Player() {
     if (currentSong && audioRef.current) {
       audioRef.current.src = currentSong.audio_url
       if (isPlaying) {
-        audioRef.current.play().catch(() => {})
+        audioRef.current.play().catch(() => { })
       }
     }
   }, [currentSong])
@@ -36,7 +38,7 @@ export function Player() {
   useEffect(() => {
     if (audioRef.current) {
       if (isPlaying) {
-        audioRef.current.play().catch(() => {})
+        audioRef.current.play().catch(() => { })
       } else {
         audioRef.current.pause()
       }
@@ -56,7 +58,12 @@ export function Player() {
   }
 
   const handleEnded = () => {
-    playNext()
+    if (isLooping && audioRef.current) {
+      audioRef.current.currentTime = 0
+      audioRef.current.play().catch(() => { })
+    } else {
+      playNext()
+    }
   }
 
   const handleSeek = (value: number[]) => {
@@ -75,12 +82,12 @@ export function Player() {
         onTimeUpdate={handleTimeUpdate}
         onEnded={handleEnded}
       />
-      
+
       {/* Song Info */}
       <div className="flex items-center gap-4 w-[30%]">
         <div className="relative w-14 h-14 rounded overflow-hidden bg-zinc-800">
-          <Image 
-            src={currentSong.image_url || "/placeholder.svg"} 
+          <Image
+            src={currentSong.image_url || "/placeholder.svg"}
             alt={currentSong.title}
             fill
             className="object-cover"
@@ -95,9 +102,9 @@ export function Player() {
       {/* Controls */}
       <div className="flex flex-col items-center gap-2 w-[40%]">
         <div className="flex items-center gap-6">
-          <Button 
-            variant="ghost" 
-            size="icon" 
+          <Button
+            variant="ghost"
+            size="icon"
             className={`text-zinc-400 hover:text-white ${isShuffle ? 'text-green-500 hover:text-green-400' : ''}`}
             onClick={toggleShuffle}
           >
@@ -106,9 +113,9 @@ export function Player() {
           <Button variant="ghost" size="icon" className="text-zinc-400 hover:text-white" onClick={playPrevious}>
             <SkipBack className="w-5 h-5" />
           </Button>
-          <Button 
-            size="icon" 
-            className="bg-white text-black hover:bg-zinc-200 rounded-full w-8 h-8" 
+          <Button
+            size="icon"
+            className="bg-white text-black hover:bg-zinc-200 rounded-full w-8 h-8"
             onClick={togglePlay}
           >
             {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 ml-0.5" />}
@@ -116,7 +123,12 @@ export function Player() {
           <Button variant="ghost" size="icon" className="text-zinc-400 hover:text-white" onClick={playNext}>
             <SkipForward className="w-5 h-5" />
           </Button>
-          <Button variant="ghost" size="icon" className="text-zinc-400 hover:text-white">
+          <Button
+            variant="ghost"
+            size="icon"
+            className={`text-zinc-400 hover:text-white ${isLooping ? 'text-green-500 hover:text-green-400' : ''}`}
+            onClick={toggleLoop}
+          >
             <Repeat className="w-4 h-4" />
           </Button>
         </div>

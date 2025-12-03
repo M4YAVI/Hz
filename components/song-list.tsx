@@ -1,6 +1,6 @@
 "use client"
 
-import { Play, Clock, Trash2, List, Grid } from 'lucide-react'
+import { Play, Clock, Trash2, List, Grid, Shuffle } from 'lucide-react'
 import { Song } from "@/types/song"
 import { usePlayerStore } from "@/lib/store"
 import { formatDuration, formatDate } from "@/lib/utils"
@@ -18,7 +18,7 @@ interface SongListProps {
 }
 
 export function SongList({ songs, isAdmin = false, title = "All Songs", description = "Your personal collection" }: SongListProps) {
-  const { playSong, currentSong, isPlaying, togglePlay, setQueue } = usePlayerStore()
+  const { playSong, currentSong, isPlaying, togglePlay, setQueue, isShuffle, setShuffle } = usePlayerStore()
   const [viewMode, setViewMode] = useState<'list' | 'compact'>('list')
   const router = useRouter()
   const supabase = createBrowserClient(
@@ -37,8 +37,28 @@ export function SongList({ songs, isAdmin = false, title = "All Songs", descript
   const handlePlayAll = () => {
     if (songs.length > 0) {
       setQueue(songs)
+      setShuffle(false)
       playSong(songs[0])
     }
+  }
+
+  const handleMainPlayClick = () => {
+    const isCurrentSongInList = songs.some(s => s.id === currentSong?.id)
+    if (isCurrentSongInList) {
+      setShuffle(false)
+      togglePlay()
+    } else {
+      handlePlayAll()
+    }
+  }
+
+  const handleShufflePlay = () => {
+    if (songs.length === 0) return
+    setShuffle(true)
+    setQueue(songs)
+
+    const randomIndex = Math.floor(Math.random() * songs.length)
+    playSong(songs[randomIndex])
   }
 
   return (
@@ -63,30 +83,46 @@ export function SongList({ songs, isAdmin = false, title = "All Songs", descript
       {/* Controls */}
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center gap-4">
-          <Button 
-            size="icon" 
-            className="w-14 h-14 rounded-full bg-green-500 hover:bg-green-400 text-black shadow-lg shadow-green-500/20"
-            onClick={handlePlayAll}
+          <Button
+            size="icon"
+            className={`w-14 h-14 rounded-full transition-colors ${!isShuffle
+                ? 'bg-green-500 hover:bg-green-400 text-black shadow-lg shadow-green-500/20'
+                : 'bg-white/10 hover:bg-white/20 text-white'
+              }`}
+            onClick={handleMainPlayClick}
+            title="Sequential Play"
           >
             {isPlaying && songs.some(s => s.id === currentSong?.id) ? (
-              <Pause className="w-6 h-6" onClick={(e) => { e.stopPropagation(); togglePlay(); }} />
+              <Pause className="w-6 h-6" />
             ) : (
               <Play className="w-6 h-6 ml-1" />
             )}
           </Button>
+
+          <Button
+            size="icon"
+            className={`w-14 h-14 rounded-full transition-colors ${isShuffle
+                ? 'bg-green-500 hover:bg-green-400 text-black shadow-lg shadow-green-500/20'
+                : 'bg-white/10 hover:bg-white/20 text-white'
+              }`}
+            onClick={handleShufflePlay}
+            title="Shuffle Play"
+          >
+            <Shuffle className="w-6 h-6" />
+          </Button>
         </div>
         <div className="flex items-center gap-2">
-          <Button 
-            variant="ghost" 
-            size="icon" 
+          <Button
+            variant="ghost"
+            size="icon"
             className={`text-zinc-400 hover:text-white ${viewMode === 'list' ? 'text-white' : ''}`}
             onClick={() => setViewMode('list')}
           >
             <List className="w-5 h-5" />
           </Button>
-          <Button 
-            variant="ghost" 
-            size="icon" 
+          <Button
+            variant="ghost"
+            size="icon"
             className={`text-zinc-400 hover:text-white ${viewMode === 'compact' ? 'text-white' : ''}`}
             onClick={() => setViewMode('compact')}
           >
@@ -109,9 +145,8 @@ export function SongList({ songs, isAdmin = false, title = "All Songs", descript
         {songs.map((song, index) => (
           <div
             key={song.id}
-            className={`grid grid-cols-[auto_1fr_1fr_1fr_auto] gap-4 px-4 py-2 rounded-md hover:bg-white/10 group cursor-pointer items-center transition-colors ${
-              currentSong?.id === song.id ? 'bg-white/10' : ''
-            }`}
+            className={`grid grid-cols-[auto_1fr_1fr_1fr_auto] gap-4 px-4 py-2 rounded-md hover:bg-white/10 group cursor-pointer items-center transition-colors ${currentSong?.id === song.id ? 'bg-white/10' : ''
+              }`}
             onClick={() => {
               setQueue(songs)
               playSong(song)
@@ -125,12 +160,12 @@ export function SongList({ songs, isAdmin = false, title = "All Songs", descript
               )}
               <Play className="w-4 h-4 hidden group-hover:block text-white" />
             </div>
-            
-            <div className="flex items-center gap-3">
+
+            <div className="flex items-center gap-3 min-w-0">
               <div className="relative w-10 h-10 min-w-[2.5rem]">
                 <Image src={song.image_url || "/placeholder.svg"} alt={song.title} fill className="object-cover rounded" />
               </div>
-              <div className="flex flex-col overflow-hidden">
+              <div className="flex flex-col overflow-hidden min-w-0">
                 <span className={`font-medium truncate ${currentSong?.id === song.id ? 'text-green-500' : 'text-white'}`}>
                   {song.title}
                 </span>
@@ -142,7 +177,7 @@ export function SongList({ songs, isAdmin = false, title = "All Songs", descript
 
             <span className="text-sm text-zinc-400 truncate group-hover:text-white">{song.album}</span>
             <span className="text-sm text-zinc-400 truncate group-hover:text-white">{formatDate(song.created_at)}</span>
-            
+
             <div className="flex items-center justify-end gap-4 w-12">
               {isAdmin && (
                 <Button

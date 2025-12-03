@@ -7,13 +7,16 @@ interface PlayerStore {
   queue: Song[]
   currentIndex: number
   isShuffle: boolean
-  
+
   setQueue: (songs: Song[]) => void
   playSong: (song: Song) => void
   togglePlay: () => void
   playNext: () => void
   playPrevious: () => void
   toggleShuffle: () => void
+  setShuffle: (shuffle: boolean) => void
+  isLooping: boolean
+  toggleLoop: () => void
 }
 
 export const usePlayerStore = create<PlayerStore>((set, get) => ({
@@ -22,9 +25,10 @@ export const usePlayerStore = create<PlayerStore>((set, get) => ({
   queue: [],
   currentIndex: -1,
   isShuffle: false,
+  isLooping: false,
 
   setQueue: (songs) => set({ queue: songs }),
-  
+
   playSong: (song) => {
     const { queue } = get()
     const index = queue.findIndex(s => s.id === song.id)
@@ -43,11 +47,11 @@ export const usePlayerStore = create<PlayerStore>((set, get) => ({
     } else {
       nextIndex = (currentIndex + 1) % queue.length
     }
-    
-    set({ 
-      currentSong: queue[nextIndex], 
+
+    set({
+      currentSong: queue[nextIndex],
       currentIndex: nextIndex,
-      isPlaying: true 
+      isPlaying: true
     })
   },
 
@@ -56,12 +60,14 @@ export const usePlayerStore = create<PlayerStore>((set, get) => ({
     if (queue.length === 0) return
 
     const prevIndex = currentIndex - 1 < 0 ? queue.length - 1 : currentIndex - 1
-    set({ 
-      currentSong: queue[prevIndex], 
+    set({
+      currentSong: queue[prevIndex],
       currentIndex: prevIndex,
-      isPlaying: true 
+      isPlaying: true
     })
   },
 
   toggleShuffle: () => set((state) => ({ isShuffle: !state.isShuffle })),
+  setShuffle: (shuffle: boolean) => set({ isShuffle: shuffle }),
+  toggleLoop: () => set((state) => ({ isLooping: !state.isLooping })),
 }))
